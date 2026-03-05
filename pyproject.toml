@@ -1,38 +1,44 @@
 [build-system]
 requires = [
-  "setuptools>=68",
-  "wheel",
-  "pybind11>=2.11"
+    "setuptools>=68",
+    "wheel",
+    "pybind11>=2.11"
 ]
 build-backend = "setuptools.build_meta"
+
 
 [project]
 name = "gridoptim"
 version = "1.0.0"
-description = "Fast grid search optimizer implemented in C++ with pybind11"
+description = "Fast multivariate grid search optimizer with C++ core"
 readme = "README.md"
 requires-python = ">=3.10"
 
 authors = [
-  {name = "Akhil Shimna Kumar"}
+    { name = "Akhil Shimna Kumar" }
 ]
 
-license = {text = "Proprietary"}
+license = { text = "Proprietary" }
 
 keywords = [
-  "optimization",
-  "grid search",
-  "hyperparameter search",
-  "pybind11"
+    "optimization",
+    "grid search",
+    "numerical optimization",
+    "pybind11",
+    "multivariate optimization"
 ]
 
 classifiers = [
-  "Programming Language :: Python :: 3",
-  "Programming Language :: C++",
-  "Operating System :: OS Independent"
+    "Programming Language :: Python :: 3",
+    "Programming Language :: C++",
+    "Programming Language :: Python :: 3 :: Only",
+    "Operating System :: OS Independent"
 ]
 
 [tool.cibuildwheel]
+
+# Build wheels for Python 3.10–3.14
 build = "cp310-* cp311-* cp312-* cp313-* cp314-*"
+
+# Skip musl builds (Alpine Linux)
 skip = "*-musllinux_*"
-test-command = "python -c \"from gridoptim import GridOptim; print(GridOptim)\""
