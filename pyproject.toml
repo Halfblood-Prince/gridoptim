@@ -1,8 +1,8 @@
 [build-system]
 requires = [
-    "setuptools>=68",
-    "wheel",
-    "pybind11>=2.11"
+  "setuptools>=77",
+  "wheel",
+  "pybind11>=2.11"
 ]
 build-backend = "setuptools.build_meta"
 
@@ -14,31 +14,38 @@ description = "Fast multivariate grid search optimizer with C++ core"
 readme = "README.md"
 requires-python = ">=3.10"
 
-authors = [
-    { name = "Akhil Shimna Kumar" }
-]
+authors = [{ name = "Akhil Shimna Kumar" }]
 
-license = { text = "Proprietary" }
+# Fixes the deprecation warning: use a simple SPDX-like string (or just "Proprietary")
+license = "Proprietary"
 
 keywords = [
-    "optimization",
-    "grid search",
-    "numerical optimization",
-    "pybind11",
-    "multivariate optimization"
+  "optimization",
+  "grid search",
+  "numerical optimization",
+  "pybind11",
+  "multivariate optimization"
 ]
 
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "Programming Language :: C++",
-    "Programming Language :: Python :: 3 :: Only",
-    "Operating System :: OS Independent"
+  "Programming Language :: Python :: 3",
+  "Programming Language :: C++",
+  "Programming Language :: Python :: 3 :: Only",
+  "Operating System :: OS Independent"
 ]
 
+# IMPORTANT: tell setuptools what to package (prevents cpp/ from being treated as a package)
+[tool.setuptools]
+package-dir = {"" = "."}
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["gridoptim*"]
+exclude = ["cpp*", "tests*"]
+
+
+# cibuildwheel: build only one ABI3 wheel (cp310-abi3) for each platform
 [tool.cibuildwheel]
-
-# Build wheels for Python 3.10–3.14
-build = "cp310-* cp311-* cp312-* cp313-* cp314-*"
-
-# Skip musl builds (Alpine Linux)
+build = "cp310-*"
 skip = "*-musllinux_*"
+test-command = "python -c \"from gridoptim import GridOptim; print('ok', GridOptim)\""
