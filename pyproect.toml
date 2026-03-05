@@ -1,0 +1,25 @@
+[project]
+name = "gridoptim"
+version = "1.0.0"
+description = "Fast grid search optimizer implemented in C++ with pybind11"
+readme = "README.md"
+requires-python = ">=3.9"
+
+authors = [
+  {name = "Akhil Shimna Kumar"}
+]
+
+license = {text = "Proprietary"}
+
+keywords = [
+  "optimization",
+  "grid search",
+  "hyperparameter search",
+  "pybind11"
+]
+
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: C++",
+  "Operating System :: OS Independent"
+]
