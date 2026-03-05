@@ -16,8 +16,8 @@ requires-python = ">=3.10"
 
 authors = [{ name = "Akhil Shimna Kumar" }]
 
-# Fixes the deprecation warning: use a simple SPDX-like string (or just "Proprietary")
-license = "Proprietary"
+# Valid per PEP 621 schema
+license = { file = "LICENSE" }
 
 keywords = [
   "optimization",
@@ -34,18 +34,20 @@ classifiers = [
   "Operating System :: OS Independent"
 ]
 
-# IMPORTANT: tell setuptools what to package (prevents cpp/ from being treated as a package)
-[tool.setuptools]
-package-dir = {"" = "."}
+[project.urls]
+Homepage = "https://github.com/Halfblood-Prince/gridoptim"
+Repository = "https://github.com/Halfblood-Prince/gridoptim"
 
+
+# Prevent setuptools from treating cpp/ as a package
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["gridoptim*"]
 exclude = ["cpp*", "tests*"]
 
 
-# cibuildwheel: build only one ABI3 wheel (cp310-abi3) for each platform
+# ABI3: build only cp310 (will produce cp310-abi3 wheels if setup.py enables limited API)
 [tool.cibuildwheel]
 build = "cp310-*"
 skip = "*-musllinux_*"
-test-command = "python -c \"from gridoptim import GridOptim; print('ok', GridOptim)\""
+test-command = "python -c \"from gridoptim import GridOptim; print('ok')\""
