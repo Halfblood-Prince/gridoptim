@@ -6,28 +6,20 @@ on:
 
 jobs:
   build:
-    name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest]
+        os: [windows-latest, ubuntu-latest]   # no macOS
 
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.14"
-
+          python-version: "3.12"
       - name: Install cibuildwheel
         run: python -m pip install -U cibuildwheel
-
       - name: Build wheels
         run: cibuildwheel --output-dir dist
-        env:
-          CIBW_BUILD: "cp310-* cp311-* cp312-* cp313-* cp314-*"
-          CIBW_SKIP: "*-musllinux_*"
-
       - uses: actions/upload-artifact@v4
         with:
           name: dist-${{ matrix.os }}
