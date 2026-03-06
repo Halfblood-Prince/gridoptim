@@ -48,7 +48,7 @@ class GridSearchOptimiser:
         names, mins, maxs, steps = self._prepare()
 
         if optimiser == "brute_force":
-            return _core.optimise_cpp(self._expr, names, mins, maxs, steps, mode)
+            return _core.optimise(self._expr, names, mins, maxs, steps, mode)
 
         elif optimiser == "adaptive":
             return self._adaptive_search(mode, names, mins, maxs, steps)
@@ -66,11 +66,10 @@ class GridSearchOptimiser:
         best_point = None
 
         for level in range(levels):
-
             scale = 10 ** (levels - level - 1)
             cur_steps = [s * scale for s in steps]
 
-            val, point = _core.optimise_cpp(
+            val, point = _core.optimise(
                 self._expr,
                 names,
                 cur_mins,
