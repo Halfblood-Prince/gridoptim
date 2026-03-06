@@ -16,8 +16,6 @@ It is designed for:
 
 The computation is executed in a compiled C++ core for performance while providing a clean Python API.
 
----
-
 # Table of Contents
 
 - Overview
@@ -40,7 +38,6 @@ The computation is executed in a compiled C++ core for performance while providi
 - Author
 - License
 
----
 
 # Overview
 
@@ -62,7 +59,6 @@ Unlike probabilistic optimizers, gridoptim guarantees that the global optimum wi
 - minimal dependencies
 - reproducible results
 
----
 
 # Installation
 
@@ -75,7 +71,6 @@ pip install gridoptim
 Requirements:
 Python 3.10+
 
----
 
 # Quick Start
 
