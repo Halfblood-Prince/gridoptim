@@ -71,6 +71,7 @@ Install using pip:
 
 ```bash
 pip install gridoptim
+```
 
 Requirements:
 Python ≥ 3.10
