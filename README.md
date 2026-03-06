@@ -47,8 +47,6 @@ The optimizer searches the parameter space by evaluating every possible combinat
 
 Unlike probabilistic optimizers, gridoptim guarantees that the global optimum within the defined grid will be found.
 
----
-
 # Features
 
 - fast C++ optimization engine
@@ -58,7 +56,6 @@ Unlike probabilistic optimizers, gridoptim guarantees that the global optimum wi
 - multi-variable support
 - minimal dependencies
 - reproducible results
-
 
 # Installation
 
