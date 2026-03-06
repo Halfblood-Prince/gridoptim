@@ -8,7 +8,7 @@ ext_modules = [
         sources=["cpp/gridoptim_core.cpp", "cpp/tinyexpr.c"],
         include_dirs=["cpp", get_include()],
         language="c++",
-        extra_compile_args=["-std=c++17"],
+        extra_compile_args=["-std=c++17", "-O3", "-DNDEBUG"],
     )
 ]
 
