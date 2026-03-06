@@ -27,7 +27,7 @@ class GridSearchOptimiser:
         self._expr: Optional[str] = None
         self._ranges: Dict[str, RangeSpec] = {}
 
-    def function(self, expr: str) -> "GridOptim":
+    def function(self, expr: str) -> "GridSearchOptimiser":
         if not isinstance(expr, str) or not expr.strip():
             raise ValueError("expr must be a non-empty string")
         self._expr = expr.strip()
@@ -70,4 +70,5 @@ class GridSearchOptimiser:
 
         best_val, best_point = _core.optimise(self._expr, var_names, mins, maxs, steps, mode)
         best_vars = {v: float(best_point[i]) for i, v in enumerate(var_names)}
+
         return float(best_val), best_vars
