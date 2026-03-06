@@ -77,7 +77,9 @@ py::tuple optimise_cpp(
     double best_val = is_min ? std::numeric_limits<double>::infinity()
                              : -std::numeric_limits<double>::infinity();
     std::vector<double> best_point(d, 0.0);
-
+  
+    py::gil_scoped_release release;
+  
     #pragma omp parallel
     {
         double local_best = best_val;
@@ -166,3 +168,4 @@ PYBIND11_MODULE(_core, m) {
           py::arg("steps"),
           py::arg("mode"));
 }
+
