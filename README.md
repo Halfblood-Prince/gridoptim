@@ -84,20 +84,20 @@ Example optimization problem.
 Find the minimum of:
 
 x^2 + y^2
+
+```python
 from gridoptim import GridSearchOptimiser
 
 opt = GridSearchOptimiser()
 
-value, params = (
-    opt
-    .function("x^2 + y^2")
-    .set_range("x", -10, 10, 0.5)
-    .set_range("y", -10, 10, 0.5)
-    .optimise("min")
-)
+opt.function("x^2 + y^2")
+opt.set_range("x", -10, 10, 0.5)
+opt.set_range("y", -10, 10, 0.5)
+value, params = opt.optimise("min")
 
 print("Best value:", value)
 print("Best parameters:", params)
+```
 
 Example output:
 
