@@ -332,7 +332,9 @@ git clone https://github.com/Halfblood-Prince/gridoptim.git
 Install locally:
 
 pip install -e .
-FAQ
+
+---
+# FAQ
 What is gridoptim?
 
 gridoptim is a Python library for deterministic grid search optimization of mathematical expressions.
@@ -354,7 +356,7 @@ Why use string expressions?
 
 String expressions allow the C++ backend to evaluate functions directly without Python overhead.
 
-Keywords
+# Keywords
 
 grid search optimization
 python grid search library
@@ -364,16 +366,21 @@ deterministic optimization
 multivariate grid search
 scientific parameter optimization
 
-Citation
+# Citation
 
 If you use gridoptim in research please cite:
 
 gridoptim: Fast multivariate grid search optimizer
 https://github.com/Halfblood-Prince/gridoptim
-Author
+
+---
+
+# Author
 
 Akhil Shimna Kumar
 
-License
+---
+
+# License
 
 See LICENSE file for details.
