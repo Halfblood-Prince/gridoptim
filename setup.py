@@ -1,18 +1,32 @@
 from setuptools import setup, Extension
-from pybind11 import get_include
-from pybind11.setup_helpers import build_ext
+import pybind11
+import sys
+
+compile_args = ["-O3"]
+
+link_args = []
+
+# Enable OpenMP depending on platform
+if sys.platform == "win32":
+    compile_args.append("/openmp")
+else:
+    compile_args.append("-fopenmp")
+    link_args.append("-fopenmp")
 
 ext_modules = [
     Extension(
         "gridoptim._core",
-        sources=["cpp/gridoptim_core.cpp", "cpp/tinyexpr.c"],
-        include_dirs=["cpp", get_include()],
+        ["cpp/gridoptim_core.cpp"],
+        include_dirs=[pybind11.get_include()],
         language="c++",
-        extra_compile_args=["-std=c++17", "-O3", "-DNDEBUG"],
+        extra_compile_args=compile_args,
+        extra_link_args=link_args,
     )
 ]
 
 setup(
+    name="gridoptim",
+    version="0.1",
+    packages=["gridoptim"],
     ext_modules=ext_modules,
-    cmdclass={"build_ext": build_ext},
 )
