@@ -33,7 +33,7 @@ class GridSearchOptimiser:
         self._expr = expr.strip()
         return self
 
-    def set_range(self, var: str, min_val: float, max_val: float, step: float) -> "GridOptim":
+    def set_range(self, var: str, min_val: float, max_val: float, step: float) -> "GridSearchOptimiser":
         if not isinstance(var, str) or not var.strip():
             raise ValueError("var must be a non-empty string")
         min_val = float(min_val)
@@ -72,3 +72,4 @@ class GridSearchOptimiser:
         best_vars = {v: float(best_point[i]) for i, v in enumerate(var_names)}
 
         return float(best_val), best_vars
+
