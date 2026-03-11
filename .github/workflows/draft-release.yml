@@ -85,5 +85,4 @@ jobs:
         run: |
           gh release create "v$VERSION" \
             --title "gridoptim v$VERSION" \
-            --draft \
             --generate-notes
