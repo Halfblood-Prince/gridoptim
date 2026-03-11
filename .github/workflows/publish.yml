@@ -18,6 +18,7 @@ jobs:
     outputs:
       version: ${{ steps.vars.outputs.version }}
       tag: ${{ steps.vars.outputs.tag }}
+      tag_exists: ${{ steps.tag_check.outputs.tag_exists }}
 
     steps:
       - name: Check out repository
@@ -43,12 +44,27 @@ jobs:
             exit 1
           fi
 
+      - name: Check whether tag already exists
+        id: tag_check
+        env:
+          TAG: v${{ inputs.version }}
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists on origin. Reusing it."
+            echo "tag_exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Tag $TAG does not exist yet."
+            echo "tag_exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Set up Python
+        if: steps.tag_check.outputs.tag_exists == 'false'
         uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
       - name: Update pyproject.toml version
+        if: steps.tag_check.outputs.tag_exists == 'false'
         env:
           VERSION: ${{ inputs.version }}
         run: |
@@ -75,6 +91,7 @@ jobs:
           PY
 
       - name: Commit version bump
+        if: steps.tag_check.outputs.tag_exists == 'false'
         env:
           VERSION: ${{ inputs.version }}
         run: |
@@ -91,14 +108,10 @@ jobs:
           fi
 
       - name: Create and push tag
+        if: steps.tag_check.outputs.tag_exists == 'false'
         env:
           TAG: v${{ inputs.version }}
         run: |
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists"
-            exit 1
-          fi
-
           git tag "$TAG"
           git push origin "$TAG"
 
@@ -127,6 +140,9 @@ jobs:
 
       - name: Build wheels
         run: cibuildwheel --output-dir dist
+        env:
+          CIBW_ARCHS_LINUX: x86_64
+          CIBW_ARCHS_WINDOWS: AMD64
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
@@ -185,7 +201,11 @@ jobs:
           VERSION: ${{ needs.prepare.outputs.version }}
           TAG: ${{ needs.prepare.outputs.tag }}
         run: |
-          gh release create "$TAG" \
-            --title "gridoptim v$VERSION" \
-            --generate-notes \
-            dist/*
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "GitHub release for $TAG already exists, skipping release creation."
+          else
+            gh release create "$TAG" \
+              --title "gridoptim v$VERSION" \
+              --generate-notes \
+              dist/*
+          fi
