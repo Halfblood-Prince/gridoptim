@@ -68,7 +68,7 @@ class GridSearchOptimiser:
         maxs = [self._ranges[v].max_val for v in var_names]
         steps = [self._ranges[v].step for v in var_names]
 
-        best_val, best_point = _core.optimise(self._expr, var_names, mins, maxs, steps, mode)
+        best_val, best_point = _core.optimise(self._expr, var_names, mins, maxs, steps, mode == "max")
         best_vars = {v: float(best_point[i]) for i, v in enumerate(var_names)}
 
         return float(best_val), best_vars
