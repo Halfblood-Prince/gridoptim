@@ -33,19 +33,21 @@ Read `benchmark_report.md` and `benchmark_logs.json` first, then follow this rul
 5. `gridoptim` is faster than the reference package
 
 ## Latest benchmark result
-- timestamp: 2026-03-12T23:18:24Z
+- timestamp: 2026-03-12T23:39:00Z
 - overall_status: success_candidate_faster
-- gridoptim runtime: 0.0009835620 s
-- reference runtime: 0.0520154000 s
-- speed ratio (`reference / gridoptim`): 52.884719011786906
+- gridoptim runtime: 0.0030185630 s
+- reference runtime: 0.1034547120 s
+- speed ratio (`reference / gridoptim`): 34.27283512107244
 - same optimum: true
 - winner: gridoptim
-- root cause fixed this run: local source-tree import shadowed installed wheel and hid compiled extension (`gridoptim._core`)
+- root cause fixed this run: reduced C++ hot-loop per-iteration arithmetic by replacing repeated index division/modulus decoding with incremental mixed-radix coordinate updates
 
 ## What changed this run
-- Updated `benchmark.py` to import `gridoptim` with `PROJECT_ROOT` temporarily removed from `sys.path`, ensuring the benchmark executes the installed package and compiled extension.
-- Re-ran benchmark and verified both implementations succeed, optimum matches, and candidate is faster.
+- Updated `cpp/gridoptim_core.cpp` hot loop to assign each thread a contiguous static range and iterate coordinates incrementally, removing repeated `(idx / stride) % count` decoding in the innermost loop.
+- Kept thread-local expression compilation and global reduction semantics unchanged to preserve API and result behavior.
+- Re-ran `python benchmark.py` and confirmed `success_candidate_faster` with matching optimum.
+- Ran an additional 2D sanity check against `scipy.optimize.brute` and confirmed exact optimum/value match.
 
 ## Next change to attempt
-- Preserve current correctness/performance behavior.
-- If future CI runs regress, inspect packaging/install path handling first before tuning hot loops.
+- Benchmark larger grids to verify the incremental-index loop scales better as total evaluations increase.
+- If stable, investigate reducing OpenMP reduction overhead further (e.g., a lock-free final reduction strategy).

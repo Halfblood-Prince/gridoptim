@@ -58,6 +58,7 @@ std::pair<double, std::vector<double>> optimise(
 #endif
     {
         std::vector<double> vars(dim);
+        std::vector<std::int64_t> positions(dim, 0);
         std::vector<te_variable> te_vars(dim);
         for (std::size_t i = 0; i < dim; ++i) {
             te_vars[i] = te_variable{names[i].c_str(), &vars[i]};
@@ -79,18 +80,46 @@ std::pair<double, std::vector<double>> optimise(
         std::int64_t local_best_idx = 0;
 
 #ifdef _OPENMP
-        #pragma omp for schedule(static)
+        const int thread_count = omp_get_num_threads();
+        const int thread_id = omp_get_thread_num();
+        const std::int64_t chunk = total / thread_count;
+        const std::int64_t rem = total % thread_count;
+        const std::int64_t begin = thread_id * chunk + (thread_id < rem ? thread_id : rem);
+        const std::int64_t end = begin + chunk + (thread_id < rem ? 1 : 0);
+#else
+        const std::int64_t begin = 0;
+        const std::int64_t end = total;
 #endif
-        for (std::int64_t idx = 0; idx < total; ++idx) {
-            for (std::size_t d = 0; d < dim; ++d) {
-                const std::int64_t pos = (idx / strides[d]) % counts[d];
-                vars[d] = mins[d] + static_cast<double>(pos) * steps[d];
+
+        if (begin < end) {
+            std::int64_t idx = begin;
+            for (std::size_t d = dim; d-- > 0;) {
+                const std::int64_t stride = strides[d];
+                positions[d] = (idx / stride) % counts[d];
+                vars[d] = mins[d] + static_cast<double>(positions[d]) * steps[d];
             }
 
-            const double val = te_eval(compiled);
-            if ((maximise && val > local_best) || (!maximise && val < local_best)) {
-                local_best = val;
-                local_best_idx = idx;
+            for (; idx < end; ++idx) {
+                const double val = te_eval(compiled);
+                if ((maximise && val > local_best) || (!maximise && val < local_best)) {
+                    local_best = val;
+                    local_best_idx = idx;
+                }
+
+                if (idx + 1 == end) {
+                    break;
+                }
+
+                for (std::size_t d = 0; d < dim; ++d) {
+                    const std::int64_t next_pos = positions[d] + 1;
+                    if (next_pos < counts[d]) {
+                        positions[d] = next_pos;
+                        vars[d] += steps[d];
+                        break;
+                    }
+                    positions[d] = 0;
+                    vars[d] = mins[d];
+                }
             }
         }
 
