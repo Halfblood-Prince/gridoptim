@@ -1,186 +1,91 @@
 You are an autonomous coding agent working inside this repository.
 
-Your objective is to make this grid-search optimizer package faster than the reference implementation used in benchmark.py.
+Your job is to improve this package by building and benchmarking the local repository version of `gridoptim` inside your own environment.
 
-Follow these rules strictly.
+Never use the PyPI release of `gridoptim` for benchmarking. If the current benchmark flow downloads `gridoptim` via pip from an index, that is a bug and must be fixed.
 
 ------------------------------------------------
-PROJECT DOCUMENTATION
+PRIMARY FILES
 ------------------------------------------------
+Read these first:
 
-Before making any changes you MUST read:
-
-AGENTS.md
-MILESTONE.md
-benchmark.py
-.github/workflows/benchmark.yml
-
-These files define the optimization strategy, CI process, and current state of the project.
-
-The benchmark report and logs are produced by GitHub Actions after every merge to main.
-
-Artifacts produced by CI:
-- benchmark_report.md
-- benchmark_logs.json
-- benchmark_stdout.log
+- AGENTS.md
+- MILESTONE.md
+- benchmark.py
+- benchmark_report.md if present
+- benchmark_logs.json if present
+- benchmark_history.json if present
+- benchmark_best.json if present
 
 ------------------------------------------------
 OPERATING LOOP
 ------------------------------------------------
+1. Inspect the current repository state.
+2. Read the latest benchmark artifacts.
+3. Build and install `gridoptim` from this repository checkout.
+4. Run `python benchmark.py` in your environment.
+5. Check whether the latest result is correct and faster.
+6. Modify the repository to improve the package.
+7. Run the benchmark again.
+8. Update `MILESTONE.md`.
+9. Stop.
 
-You must operate in the following loop:
+The next Codex run repeats this loop.
 
-1. Inspect the repository
-2. Read AGENTS.md and MILESTONE.md
-3. Read the most recent benchmark artifacts
-4. Diagnose the current state
-5. Modify the package to improve speed or fix failures
-6. Update documentation
-7. Commit changes
-8. Stop
+------------------------------------------------
+REQUIRED BENCHMARK BEHAVIOR
+------------------------------------------------
+`benchmark.py` must:
+- build the package from the current repository
+- install that local build into the current Codex environment
+- benchmark the local build of `gridoptim`
+- benchmark the reference implementation on the same equation and grid
+- write `benchmark_logs.json`
+- write `benchmark_report.md`
+- append to `benchmark_history.json`
+- update `benchmark_best.json` with the fastest correct local result so far
 
-The next run of Codex will repeat the loop.
+The benchmark must not depend on GitHub Actions.
 
 ------------------------------------------------
 DECISION LOGIC
 ------------------------------------------------
+A) BUILD OR INSTALL FAILURE
+If the local package cannot be built or installed from this repo:
+- fix packaging or extension build issues first
+- rerun the benchmark
 
-Step 1: Check benchmark_report.md.
+B) CANDIDATE FAILURE
+If the local package builds but fails at runtime:
+- fix correctness or runtime errors first
+- rerun the benchmark
 
-Possible states:
+C) REFERENCE FAILURE
+If the reference benchmark fails:
+- fix the benchmark harness or environment
+- rerun the benchmark
 
-A) CI FAILURE
-If the benchmark workflow failed:
-- Read benchmark_logs.json
-- Diagnose the root cause
-- Fix the workflow, benchmark script, or package
-- Ensure CI completes successfully
-- Do NOT start performance optimization until CI works.
+D) CANDIDATE SLOWER
+If the benchmark succeeds but the local package is slower than the reference or slower than its own best recorded result:
+- optimise further
+- rerun the benchmark
+- keep iterating until a new best result is obtained
 
-B) CANDIDATE CRASHED
-If the optimizer crashed:
-- Fix correctness bugs
-- Ensure the optimizer returns valid results.
-
-C) CANDIDATE SLOWER THAN REFERENCE
-If benchmark succeeded but our optimizer is slower:
-- Improve performance of the optimizer implementation.
-Possible improvements include:
-    - vectorization
-    - numpy broadcasting
-    - parallel execution
-    - C/C++ extensions
-    - algorithmic pruning
-    - memory locality
-    - caching
-    - removing Python loops
-    - compiler optimization flags
-    - using SIMD
-    - using numba/cython
-
-You are allowed to restructure the entire package if needed.
-
-D) CANDIDATE FASTER
-If our optimizer is faster than the reference:
-- Record the result in MILESTONE.md
-- Improve stability and scalability
-- Add additional benchmarks
-- Add larger grid sizes.
+E) CANDIDATE FASTER
+If the local package is faster than the reference:
+- record the result in `MILESTONE.md`
+- look for safe further speedups or larger stress benchmarks
 
 ------------------------------------------------
-BENCHMARK OBJECTIVE
+CONSTRAINTS
 ------------------------------------------------
+You may refactor the package, improve packaging, improve the build, change the benchmark harness, and optimise the compiled implementation.
 
-benchmark.py evaluates the function:
-
-f(x,y,z,w) =
-x*x + y*y + z*z + w*w
-+ 0.10*x*y - 0.20*z*w
-+ 0.05*x*z + 0.03*y*w
-+ 3.0*x - 2.0*y + 1.0*z - 0.5*w
-
-The goal is to minimize this function.
-
-Two optimizers are compared:
-
-1) Our grid optimizer
-2) scipy.optimize.brute (reference implementation)
-
-The benchmark measures:
-- execution time
-- best result found
-
-Our goal is to make our optimizer consistently faster.
-
-------------------------------------------------
-PERFORMANCE PRIORITIES
-------------------------------------------------
-
-Optimization priority order:
-
-1) Algorithmic improvements
-2) Native code (C/C++)
-3) Parallelization
-4) Vectorization
-5) Memory layout improvements
-6) Python overhead reduction
-
-Avoid micro-optimizations before algorithm improvements.
-
-------------------------------------------------
-REPOSITORY MODIFICATION RULES
-------------------------------------------------
-
-You may:
-
-- refactor code
-- add C++ extensions
-- introduce numba/cython
-- add parallel execution
-- restructure the optimizer algorithm
-- improve the benchmark harness
-- improve CI configuration
-
-You must NOT:
-
-- remove benchmark comparisons
-- remove correctness checks
-- hardcode answers.
-
-------------------------------------------------
-DOCUMENTATION RULES
-------------------------------------------------
-
-When changes are made:
-
-Update MILESTONE.md with:
-
-- what was changed
-- why
-- expected performance impact
-- next optimization target
-
-AGENTS.md should only be modified if the optimization strategy needs improvement.
-
-------------------------------------------------
-SUCCESS CONDITION
-------------------------------------------------
-
-The project is considered successful when:
-
-our_optimizer_time < scipy_optimizer_time
-
-on the benchmark.
+You must not hardcode the benchmark answer.
+You must not remove the reference comparison.
+You must not benchmark the PyPI package instead of the local checkout.
 
 ------------------------------------------------
 START
 ------------------------------------------------
-
-Begin by reading:
-
-AGENTS.md
-MILESTONE.md
-benchmark_report.md
-benchmark_logs.json
-
-Then determine the next action and modify the repository accordingly.
+Begin by reading the listed files, then make the repository obey the local-build benchmark loop.

@@ -1,51 +1,39 @@
 # MILESTONE.md
 
-## Project status
-This repository now has:
-- a benchmark script at `benchmark.py`
-- a CI workflow at `.github/workflows/benchmark.yml`
-- benchmark artifacts written to:
+## Current objective
+The repository must benchmark the locally built checkout of `gridoptim`, not a version downloaded from PyPI.
+
+## Current expected operating model
+- Codex builds and installs `gridoptim` from this repository.
+- `benchmark.py` runs in Codex's environment.
+- The benchmark compares the locally built package against the reference implementation.
+- Benchmark outputs are stored in the repository as:
   - `benchmark_logs.json`
   - `benchmark_report.md`
-  - `benchmark_stdout.log`
-- an execution guide for Codex in `AGENTS.md`
+  - `benchmark_history.json`
+  - `benchmark_best.json`
+- Codex reads those files on the next run and continues optimising.
 
-## Current checkpoint
-The benchmark runner now imports the installed `gridoptim` package (instead of a potentially unbuilt in-repo package shadowing site-packages), which fixes local/CI false `failed_candidate` results caused by `gridoptim._core` import errors.
+## Definition of done for this phase
+1. `benchmark.py` rebuilds and reinstalls the local package automatically.
+2. The candidate benchmark uses the local repo build and never the PyPI package.
+3. Benchmark history is persisted across runs.
+4. The best correct local result is recorded separately.
+5. Codex can use the stored results to decide what to do next.
 
-## Decision policy for the next Codex run
-Read `benchmark_report.md` and `benchmark_logs.json` first, then follow this rule:
+## Immediate next actions for Codex
+1. Verify that `benchmark.py` installs from the local repository path.
+2. Verify that local benchmarking does not depend on GitHub Actions.
+3. Run the benchmark locally.
+4. If the package is slower than the reference, optimise and rerun.
+5. Update this file with each material improvement.
 
-- if `overall_status` is `failed_setup`: fix CI, installation, build, or workflow problems first
-- if `overall_status` is `failed_candidate`: fix the package import/build/runtime failure first
-- if `overall_status` is `failed_reference`: fix the benchmark harness or environment first
-- if `overall_status` is `failed_both`: fix environment and package failures before any optimisation
-- if `overall_status` is `failed_correctness`: fix correctness before speed
-- if `overall_status` is `success_candidate_slower`: optimise until `gridoptim` is faster than the reference package
-- if `overall_status` is `success_candidate_faster`: preserve correctness and optionally broaden benchmark coverage
-
-## Definition of done
-`gridoptim` is performance-ready when:
-1. the package builds successfully in CI
-2. `benchmark.py` completes successfully
-3. benchmark artifacts are produced and uploaded by GitHub Actions even if the benchmark fails
-4. `gridoptim` finds the same optimum as the reference package within tolerance
-5. `gridoptim` is faster than the reference package
-
-## Latest benchmark result
-- timestamp: 2026-03-12T23:18:24Z
-- overall_status: success_candidate_faster
-- gridoptim runtime: 0.0009835620 s
-- reference runtime: 0.0520154000 s
-- speed ratio (`reference / gridoptim`): 52.884719011786906
-- same optimum: true
-- winner: gridoptim
-- root cause fixed this run: local source-tree import shadowed installed wheel and hid compiled extension (`gridoptim._core`)
-
-## What changed this run
-- Updated `benchmark.py` to import `gridoptim` with `PROJECT_ROOT` temporarily removed from `sys.path`, ensuring the benchmark executes the installed package and compiled extension.
-- Re-ran benchmark and verified both implementations succeed, optimum matches, and candidate is faster.
-
-## Next change to attempt
-- Preserve current correctness/performance behavior.
-- If future CI runs regress, inspect packaging/install path handling first before tuning hot loops.
+## Update template
+After each meaningful run, replace this section with:
+- latest status
+- latest candidate runtime
+- latest reference runtime
+- best recorded candidate runtime
+- whether correctness matched
+- what changed
+- next bottleneck to attack
