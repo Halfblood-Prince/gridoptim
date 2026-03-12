@@ -112,7 +112,7 @@ def benchmark_candidate() -> RunResult:
         #   gridoptim.optimize(func, bounds=[...], grid_size=..., minimize=True)
         start = time.perf_counter()
 
-        result = module.optimize(
+        result = module.optimise(
             objective_values,
             bounds=[(-10.0, 10.0)] * 4,
             grid_size=64,
