@@ -1,6 +1,0 @@
-include README.md
-include LICENSE
-include pyproject.toml
-include setup.py
-recursive-include cpp *.cpp *.c *.h
-recursive-include tests *.py
