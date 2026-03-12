@@ -11,12 +11,7 @@ This repository now has:
 - an execution guide for Codex in `AGENTS.md`
 
 ## Current checkpoint
-The repo is now set up so benchmark failures are part of the recorded state instead of a dead end.
-
-The workflow should now:
-- preserve benchmark artifacts even when the run fails
-- upload stdout and pip install logs for debugging
-- mark failures explicitly so the next Codex run knows whether to fix CI, fix correctness, or continue performance work
+The benchmark runner now imports the installed `gridoptim` package (instead of a potentially unbuilt in-repo package shadowing site-packages), which fixes local/CI false `failed_candidate` results caused by `gridoptim._core` import errors.
 
 ## Decision policy for the next Codex run
 Read `benchmark_report.md` and `benchmark_logs.json` first, then follow this rule:
@@ -37,39 +32,20 @@ Read `benchmark_report.md` and `benchmark_logs.json` first, then follow this rul
 4. `gridoptim` finds the same optimum as the reference package within tolerance
 5. `gridoptim` is faster than the reference package
 
-## Latest known state
-This checkpoint was created before a fresh CI rerun in this environment, so concrete timings are not yet available.
+## Latest benchmark result
+- timestamp: 2026-03-12T23:18:24Z
+- overall_status: success_candidate_faster
+- gridoptim runtime: 0.0009835620 s
+- reference runtime: 0.0520154000 s
+- speed ratio (`reference / gridoptim`): 52.884719011786906
+- same optimum: true
+- winner: gridoptim
+- root cause fixed this run: local source-tree import shadowed installed wheel and hid compiled extension (`gridoptim._core`)
 
-### Expected status categories
-- `failed_setup`
-- `failed_candidate`
-- `failed_reference`
-- `failed_both`
-- `failed_correctness`
-- `success_candidate_slower`
-- `success_candidate_faster`
+## What changed this run
+- Updated `benchmark.py` to import `gridoptim` with `PROJECT_ROOT` temporarily removed from `sys.path`, ensuring the benchmark executes the installed package and compiled extension.
+- Re-ran benchmark and verified both implementations succeed, optimum matches, and candidate is faster.
 
-## Next action
-Trigger or inspect the next benchmark run on `main`, then update this file with:
-- timestamp
-- `overall_status`
-- gridoptim runtime
-- reference runtime
-- same optimum
-- winner
-- root cause if failed
-- next bottleneck or next fix
-
-## Update template
-### Latest benchmark result
-- timestamp: not yet run after failure-handling update
-- overall_status: not yet run
-- gridoptim runtime: not yet run
-- reference runtime: not yet run
-- speed ratio (`reference / gridoptim`): not yet run
-- same optimum: not yet run
-- winner: not yet run
-- root cause: not yet run
-
-### Next change to attempt
-- inspect the next benchmark artifacts and follow the decision policy above
+## Next change to attempt
+- Preserve current correctness/performance behavior.
+- If future CI runs regress, inspect packaging/install path handling first before tuning hot loops.

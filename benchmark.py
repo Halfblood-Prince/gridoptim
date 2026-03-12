@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import importlib
 import math
 import os
 import statistics
@@ -81,7 +82,15 @@ def compare_params(a: Dict[str, float], b: Dict[str, float]) -> bool:
 
 def run_gridoptim() -> BenchmarkResult:
     try:
-        from gridoptim import GridSearchOptimiser
+        original_path = list(sys.path)
+        try:
+            sys.path = [
+                p for p in sys.path
+                if Path(p or ".").resolve() != PROJECT_ROOT
+            ]
+            GridSearchOptimiser = importlib.import_module("gridoptim").GridSearchOptimiser
+        finally:
+            sys.path = original_path
 
         durations: List[float] = []
         best_value: float | None = None
