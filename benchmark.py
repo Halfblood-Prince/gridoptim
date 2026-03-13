@@ -1,4 +1,3 @@
-```python
 #!/usr/bin/env python3
 from __future__ import annotations
 
@@ -10,13 +9,14 @@ import time
 import traceback
 from pathlib import Path
 from typing import Any
-
+import importlib
 
 ROOT = Path(__file__).resolve().parent
 STATE_PATH = ROOT / "benchmark_state.json"
 LOG_PATH = ROOT / "benchmark_logs.json"
 REPORT_PATH = ROOT / "benchmark_report.md"
 HISTORY_PATH = ROOT / "benchmark_history.json"
+BEST_PATH = ROOT / "benchmark_best.json"
 
 
 def run_cmd(cmd: list[str]) -> None:
@@ -34,17 +34,7 @@ def install_scipy_from_pip() -> None:
 
 def install_local_package() -> None:
     run_cmd([sys.executable, "-m", "pip", "install", "--upgrade", "pip"])
-    run_cmd(
-        [
-            sys.executable,
-            "-m",
-            "pip",
-            "install",
-            "--no-deps",
-            "--force-reinstall",
-            str(ROOT),
-        ]
-    )
+    run_cmd([sys.executable, "-m", "pip", "install", "--no-deps", "--force-reinstall", str(ROOT)])
 
 
 def objective_expr() -> str:
@@ -59,10 +49,18 @@ def objective_expr() -> str:
 def objective_numpy(v: Any) -> float:
     x, y, z, w = v
     return (
-        x * x + y * y + z * z + w * w
-        + 0.10 * x * y - 0.20 * z * w
-        + 0.05 * x * z + 0.03 * y * w
-        + 3.0 * x - 2.0 * y + 1.0 * z - 0.5 * w
+        x * x
+        + y * y
+        + z * z
+        + w * w
+        + 0.10 * x * y
+        - 0.20 * z * w
+        + 0.05 * x * z
+        + 0.03 * y * w
+        + 3.0 * x
+        - 2.0 * y
+        + 1.0 * z
+        - 0.5 * w
     )
 
 
@@ -82,29 +80,25 @@ def save_json(path: Path, data: Any) -> None:
 def safe_float(value: Any) -> float | None:
     try:
         out = float(value)
-        if math.isnan(out) or math.isinf(out):
-            return None
-        return out
-    except Exception:
-        return None
-
-
-def to_float_list(value: Any) -> list[float] | None:
-    try:
-        return [float(v) for v in value]
+        return out if math.isfinite(out) else None
     except Exception:
         return None
 
 
 def benchmark_candidate() -> dict[str, Any]:
     try:
+        # Ensure we import the installed local wheel, not the in-tree package directory.
+        root_str = str(ROOT)
+        sys.path[:] = [p for p in sys.path if Path(p or ".").resolve() != ROOT]
+        importlib.invalidate_caches()
         from gridoptim import GridSearchOptimiser
 
-        optimiser = GridSearchOptimiser(objective_expr())
-        optimiser.set_range("x", -10.0, 10.0, 64)
-        optimiser.set_range("y", -10.0, 10.0, 64)
-        optimiser.set_range("z", -10.0, 10.0, 64)
-        optimiser.set_range("w", -10.0, 10.0, 64)
+        step = 20.0 / 64.0
+        optimiser = GridSearchOptimiser().function(objective_expr())
+        optimiser.set_range("x", -10.0, 10.0, step)
+        optimiser.set_range("y", -10.0, 10.0, step)
+        optimiser.set_range("z", -10.0, 10.0, step)
+        optimiser.set_range("w", -10.0, 10.0, step)
 
         start = time.perf_counter()
         result = optimiser.optimise("min")
@@ -112,38 +106,17 @@ def benchmark_candidate() -> dict[str, Any]:
 
         best_point = None
         best_value = None
+        if isinstance(result, tuple) and len(result) == 2:
+            best_value = safe_float(result[0])
+            if isinstance(result[1], dict):
+                best_point = [float(result[1][k]) for k in ("x", "y", "z", "w")]
+        elif isinstance(result, dict):
+            maybe = result.get("best_point")
+            if isinstance(maybe, (list, tuple)):
+                best_point = [float(v) for v in maybe]
+            best_value = safe_float(result.get("best_value"))
 
-        if isinstance(result, dict):
-            best_point = (
-                to_float_list(result.get("best_point"))
-                or to_float_list(result.get("point"))
-                or to_float_list(result.get("x"))
-            )
-            best_value = (
-                safe_float(result.get("best_value"))
-                or safe_float(result.get("value"))
-                or safe_float(result.get("fun"))
-            )
-        elif isinstance(result, (list, tuple)):
-            if len(result) >= 1:
-                best_point = to_float_list(result[0])
-            if len(result) >= 2:
-                best_value = safe_float(result[1])
-
-        if best_point is None and hasattr(optimiser, "best_values"):
-            maybe = getattr(optimiser, "best_values")
-            if isinstance(maybe, dict):
-                try:
-                    best_point = [
-                        float(maybe["x"]),
-                        float(maybe["y"]),
-                        float(maybe["z"]),
-                        float(maybe["w"]),
-                    ]
-                except Exception:
-                    pass
-
-        if best_value is None and best_point is not None and len(best_point) == 4:
+        if best_value is None and best_point is not None:
             best_value = objective_numpy(best_point)
 
         return {
@@ -183,7 +156,7 @@ def benchmark_reference() -> dict[str, Any]:
         best_point = brute(objective_numpy, ranges, finish=None)
         elapsed = time.perf_counter() - start
 
-        best_point = to_float_list(best_point)
+        best_point = [float(v) for v in best_point]
         best_value = objective_numpy(best_point)
 
         return {
@@ -207,126 +180,52 @@ def benchmark_reference() -> dict[str, Any]:
         }
 
 
-def update_state(candidate: dict[str, Any], reference: dict[str, Any]) -> dict[str, Any]:
-    old_state = load_json(
-        STATE_PATH,
-        {
-            "status": "not_run_yet",
-            "latest": {
-                "candidate_seconds": None,
-                "reference_seconds": None,
-                "ratio_vs_reference": None,
-            },
-            "best": {
-                "candidate_seconds": None,
-                "reference_seconds": None,
-                "ratio_vs_reference": None,
-            },
-            "competitor_beaten": False,
-            "target": {
-                "type": "beat_reference",
-                "goal_ratio_below": 1.0,
-                "goal_candidate_seconds_below": None,
-            },
-            "history_count": 0,
-            "next_action": "Run benchmark.py, then optimize the repository package.",
-        },
-    )
-
-    candidate_time = candidate.get("elapsed_seconds")
-    reference_time = reference.get("elapsed_seconds")
-
+def derive_state(candidate: dict[str, Any], reference: dict[str, Any]) -> dict[str, Any]:
+    old_state = load_json(STATE_PATH, {})
     ratio = None
-    if candidate_time is not None and reference_time not in (None, 0):
-        ratio = candidate_time / reference_time
+    if candidate.get("elapsed_seconds") and reference.get("elapsed_seconds"):
+        ratio = candidate["elapsed_seconds"] / reference["elapsed_seconds"]
 
-    best = old_state.get("best", {})
-    best_candidate = best.get("candidate_seconds")
+    correctness_ok = False
+    c_val = candidate.get("best_value")
+    r_val = reference.get("best_value")
+    if c_val is not None and r_val is not None:
+        correctness_ok = abs(float(c_val) - float(r_val)) <= 1e-9
 
     if candidate["status"] != "success":
-        status = "candidate_failed"
-        competitor_beaten = bool(old_state.get("competitor_beaten", False))
-        target = {
-            "type": "fix_candidate",
-            "goal_ratio_below": None,
-            "goal_candidate_seconds_below": None,
-        }
-        next_action = "Fix the local package so benchmark.py can run the candidate benchmark successfully."
+        overall_status = "failed_candidate"
     elif reference["status"] != "success":
-        status = "reference_failed"
-        competitor_beaten = bool(old_state.get("competitor_beaten", False))
-        target = {
-            "type": "fix_reference",
-            "goal_ratio_below": None,
-            "goal_candidate_seconds_below": None,
-        }
-        next_action = "Fix the SciPy reference benchmark or the benchmark harness."
+        overall_status = "failed_reference"
+    elif not correctness_ok:
+        overall_status = "failed_correctness"
+    elif ratio is not None and ratio < 1.0:
+        overall_status = "success_candidate_faster"
     else:
-        competitor_beaten = candidate_time < reference_time
+        overall_status = "success_candidate_slower"
 
-        if best_candidate is None or candidate_time < best_candidate:
-            best_candidate = candidate_time
-            best_reference = reference_time
-            best_ratio = ratio
-        else:
-            best_reference = best.get("reference_seconds")
-            best_ratio = best.get("ratio_vs_reference")
-
-        if competitor_beaten:
-            status = "candidate_faster"
-            target = {
-                "type": "beat_previous_best",
-                "goal_ratio_below": best_ratio,
-                "goal_candidate_seconds_below": best_candidate,
-            }
-            next_action = (
-                "Competitor already beaten. Make the next iteration faster than the previous best candidate run."
-            )
-        else:
-            status = "candidate_slower"
-            target = {
-                "type": "beat_reference",
-                "goal_ratio_below": 1.0,
-                "goal_candidate_seconds_below": reference_time,
-            }
-            next_action = "Optimize the package until it beats the SciPy reference benchmark."
-
-        best = {
-            "candidate_seconds": best_candidate,
-            "reference_seconds": best_reference,
-            "ratio_vs_reference": best_ratio,
-        }
-
-        state = {
-            "status": status,
-            "latest": {
-                "candidate_seconds": candidate_time,
-                "reference_seconds": reference_time,
+    best = old_state.get("best", {"candidate_seconds": None, "reference_seconds": None, "ratio_vs_reference": None})
+    if overall_status.startswith("success"):
+        best_candidate = best.get("candidate_seconds")
+        if best_candidate is None or candidate["elapsed_seconds"] < best_candidate:
+            best = {
+                "candidate_seconds": candidate["elapsed_seconds"],
+                "reference_seconds": reference["elapsed_seconds"],
                 "ratio_vs_reference": ratio,
-            },
-            "best": best,
-            "competitor_beaten": competitor_beaten
-            or bool(old_state.get("competitor_beaten", False)),
-            "target": target,
-            "history_count": int(old_state.get("history_count", 0)) + 1,
-            "next_action": next_action,
-        }
-        return state
+            }
 
-    state = {
-        "status": status,
+    return {
+        "overall_status": overall_status,
         "latest": {
-            "candidate_seconds": candidate_time,
-            "reference_seconds": reference_time,
+            "candidate_seconds": candidate.get("elapsed_seconds"),
+            "reference_seconds": reference.get("elapsed_seconds"),
             "ratio_vs_reference": ratio,
+            "correctness_ok": correctness_ok,
         },
-        "best": old_state.get("best", {}),
-        "competitor_beaten": competitor_beaten,
-        "target": target,
+        "best": best,
+        "competitor_beaten": bool(ratio is not None and ratio < 1.0),
         "history_count": int(old_state.get("history_count", 0)) + 1,
-        "next_action": next_action,
+        "next_action": "Fix failures first" if overall_status.startswith("failed") else "Optimise candidate runtime",
     }
-    return state
 
 
 def update_history(entry: dict[str, Any]) -> None:
@@ -337,75 +236,64 @@ def update_history(entry: dict[str, Any]) -> None:
     save_json(HISTORY_PATH, history)
 
 
-def write_report(state: dict[str, Any], candidate: dict[str, Any], reference: dict[str, Any]) -> None:
+def update_best(entry: dict[str, Any]) -> None:
+    state = entry["state"]
+    if not state["overall_status"].startswith("success"):
+        return
+    best = load_json(BEST_PATH, {})
+    current_best = best.get("candidate_seconds")
+    candidate_seconds = state["latest"]["candidate_seconds"]
+    if current_best is None or candidate_seconds < current_best:
+        save_json(
+            BEST_PATH,
+            {
+                "candidate_seconds": candidate_seconds,
+                "reference_seconds": state["latest"]["reference_seconds"],
+                "ratio_vs_reference": state["latest"]["ratio_vs_reference"],
+                "correctness_ok": state["latest"]["correctness_ok"],
+            },
+        )
+
+
+def write_report(entry: dict[str, Any]) -> None:
+    s = entry["state"]
+    c = entry["candidate"]
+    r = entry["reference"]
     lines = [
         "# Benchmark Report",
         "",
-        f"Status: `{state['status']}`",
+        f"overall_status: `{s['overall_status']}`",
+        f"candidate_seconds: `{s['latest']['candidate_seconds']}`",
+        f"reference_seconds: `{s['latest']['reference_seconds']}`",
+        f"ratio_vs_reference: `{s['latest']['ratio_vs_reference']}`",
+        f"correctness_ok: `{s['latest']['correctness_ok']}`",
         "",
-        "## Latest",
-        f"- candidate_seconds: `{state['latest']['candidate_seconds']}`",
-        f"- reference_seconds: `{state['latest']['reference_seconds']}`",
-        f"- ratio_vs_reference: `{state['latest']['ratio_vs_reference']}`",
+        "## Candidate",
+        f"- status: `{c['status']}`",
+        f"- best_point: `{c['best_point']}`",
+        f"- best_value: `{c['best_value']}`",
         "",
-        "## Best",
-        f"- best_candidate_seconds: `{state['best'].get('candidate_seconds')}`",
-        f"- best_reference_seconds: `{state['best'].get('reference_seconds')}`",
-        f"- best_ratio_vs_reference: `{state['best'].get('ratio_vs_reference')}`",
-        "",
-        f"competitor_beaten: `{state['competitor_beaten']}`",
-        "",
-        "## Target",
-        f"- type: `{state['target']['type']}`",
-        f"- goal_ratio_below: `{state['target']['goal_ratio_below']}`",
-        f"- goal_candidate_seconds_below: `{state['target']['goal_candidate_seconds_below']}`",
-        "",
-        "## Next action",
-        state["next_action"],
-        "",
-        "## Candidate result",
-        f"- status: `{candidate['status']}`",
-        f"- elapsed_seconds: `{candidate['elapsed_seconds']}`",
-        f"- best_point: `{candidate['best_point']}`",
-        f"- best_value: `{candidate['best_value']}`",
-        "",
-        "## Reference result",
-        f"- status: `{reference['status']}`",
-        f"- elapsed_seconds: `{reference['elapsed_seconds']}`",
-        f"- best_point: `{reference['best_point']}`",
-        f"- best_value: `{reference['best_value']}`",
+        "## Reference",
+        f"- status: `{r['status']}`",
+        f"- best_point: `{r['best_point']}`",
+        f"- best_value: `{r['best_value']}`",
     ]
-
-    if candidate.get("traceback"):
-        lines.extend(["", "## Candidate traceback", "```text", candidate["traceback"], "```"])
-
-    if reference.get("traceback"):
-        lines.extend(["", "## Reference traceback", "```text", reference["traceback"], "```"])
-
     REPORT_PATH.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def main() -> int:
     install_scipy_from_pip()
     install_local_package()
-
     candidate = benchmark_candidate()
     reference = benchmark_reference()
-
-    state = update_state(candidate, reference)
-
-    log_entry = {
-        "state": state,
-        "candidate": candidate,
-        "reference": reference,
-    }
-
+    state = derive_state(candidate, reference)
+    entry = {"state": state, "candidate": candidate, "reference": reference}
     save_json(STATE_PATH, state)
-    save_json(LOG_PATH, log_entry)
-    update_history(log_entry)
-    write_report(state, candidate, reference)
-
-    print(json.dumps(log_entry, indent=2, sort_keys=True))
+    save_json(LOG_PATH, entry)
+    update_history(entry)
+    update_best(entry)
+    write_report(entry)
+    print(json.dumps(entry, indent=2, sort_keys=True))
     return 0
 
 

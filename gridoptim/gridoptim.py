@@ -23,9 +23,11 @@ class GridSearchOptimiser:
       - optimise("min" | "max") -> (best_value, {var: best_var_value})
     """
 
-    def __init__(self):
+    def __init__(self, expr: Optional[str] = None):
         self._expr: Optional[str] = None
         self._ranges: Dict[str, RangeSpec] = {}
+        if expr is not None:
+            self.function(expr)
 
     def function(self, expr: str) -> "GridSearchOptimiser":
         if not isinstance(expr, str) or not expr.strip():
@@ -72,4 +74,3 @@ class GridSearchOptimiser:
         best_vars = {v: float(best_point[i]) for i, v in enumerate(var_names)}
 
         return float(best_val), best_vars
-
