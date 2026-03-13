@@ -6,7 +6,7 @@ if sys.platform == "win32":
     compile_args = ["/O2", "/openmp"]
     link_args = []
 else:
-    compile_args = ["-O3", "-fopenmp"]
+    compile_args = ["-Ofast", "-march=native", "-fno-math-errno", "-fopenmp"]
     link_args = ["-fopenmp"]
 
 ext_modules = [
