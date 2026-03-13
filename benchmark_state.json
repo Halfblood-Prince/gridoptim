@@ -5,12 +5,12 @@
     "reference_seconds": 58.17105120899987
   },
   "competitor_beaten": true,
-  "history_count": 12,
+  "history_count": 13,
   "latest": {
-    "candidate_seconds": 1.677763861999665,
+    "candidate_seconds": 1.5312948060000053,
     "correctness_ok": true,
-    "ratio_vs_reference": 0.021566416549009655,
-    "reference_seconds": 77.79520803499963
+    "ratio_vs_reference": 0.01913388289646704,
+    "reference_seconds": 80.03053087999979
   },
   "next_action": "Optimise candidate runtime",
   "overall_status": "success_candidate_faster"
