@@ -1,9 +1,9 @@
 # MILESTONE.md
 
 - latest status: `success_candidate_faster`
-- latest candidate runtime: `1.677763861999665`
-- latest reference runtime: `77.79520803499963`
+- latest candidate runtime: `1.5312948060000053`
+- latest reference runtime: `80.03053087999979`
 - best recorded candidate runtime: `1.0915504039999178`
 - whether correctness matched: `true`
-- what changed: tested branch-specialised compare paths plus a dimension-specific (`dim == 4`) mixed-radix increment fast path in the C++ core, and tested non-default native compile flags (`-march=native`, `-fno-math-errno`, `-Ofast`) for the extension build; benchmarked each via local source reinstall and benchmark loop.
-- next bottleneck to attack: tinyexpr evaluation still dominates total time; next iteration should focus on reducing expression-evaluation overhead (e.g., fewer indirect loads / tighter evaluator integration) before additional traversal tweaks.
+- what changed: refactored the `dim == 4` C++ traversal to use OpenMP `for` over the outer dimension with tightly nested loops and contiguous `x` stepping, reducing mixed-radix carry/update overhead in the hot path; rebuilt from local source and reran the benchmark workflow.
+- next bottleneck to attack: tinyexpr evaluation still dominates; target evaluator overhead next (e.g., lower-indirection variable access and expression-path simplification for this fixed-size variable set).

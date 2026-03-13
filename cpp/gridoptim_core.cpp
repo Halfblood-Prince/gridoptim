@@ -78,6 +78,49 @@ std::pair<double, std::vector<double>> optimise(
                                      : std::numeric_limits<double>::infinity();
         std::int64_t local_best_idx = 0;
 
+        if (dim == 4) {
+                const std::int64_t c0 = counts[0];
+                const std::int64_t c1 = counts[1];
+                const std::int64_t c2 = counts[2];
+                const std::int64_t c3 = counts[3];
+                const double min0 = mins[0], min1 = mins[1], min2 = mins[2], min3 = mins[3];
+                const double step0 = steps[0], step1 = steps[1], step2 = steps[2], step3 = steps[3];
+
+#ifdef _OPENMP
+#pragma omp for schedule(static)
+#endif
+                for (std::int64_t p3 = 0; p3 < c3; ++p3) {
+                    vars[3] = min3 + static_cast<double>(p3) * step3;
+                    for (std::int64_t p2 = 0; p2 < c2; ++p2) {
+                        vars[2] = min2 + static_cast<double>(p2) * step2;
+                        for (std::int64_t p1 = 0; p1 < c1; ++p1) {
+                            vars[1] = min1 + static_cast<double>(p1) * step1;
+                            vars[0] = min0;
+                            const std::int64_t base_idx = ((p3 * c2 + p2) * c1 + p1) * c0;
+
+                            if (maximise) {
+                                for (std::int64_t p0 = 0; p0 < c0; ++p0) {
+                                    const double val = te_eval(compiled);
+                                    if (val > local_best) {
+                                        local_best = val;
+                                        local_best_idx = base_idx + p0;
+                                    }
+                                    vars[0] += step0;
+                                }
+                            } else {
+                                for (std::int64_t p0 = 0; p0 < c0; ++p0) {
+                                    const double val = te_eval(compiled);
+                                    if (val < local_best) {
+                                        local_best = val;
+                                        local_best_idx = base_idx + p0;
+                                    }
+                                    vars[0] += step0;
+                                }
+                            }
+                        }
+                    }
+                }
+        } else {
 #ifdef _OPENMP
         const int thread_id = omp_get_thread_num();
         const int thread_count = omp_get_num_threads();
@@ -86,101 +129,13 @@ std::pair<double, std::vector<double>> optimise(
         const int thread_count = 1;
 #endif
 
-        const std::int64_t chunk = total / thread_count;
-        const std::int64_t extra = total % thread_count;
-        const std::int64_t begin = thread_id * chunk + (thread_id < extra ? thread_id : extra);
-        const std::int64_t span = chunk + (thread_id < extra ? 1 : 0);
-        const std::int64_t end = begin + span;
+            const std::int64_t chunk = total / thread_count;
+            const std::int64_t extra = total % thread_count;
+            const std::int64_t begin = thread_id * chunk + (thread_id < extra ? thread_id : extra);
+            const std::int64_t span = chunk + (thread_id < extra ? 1 : 0);
+            const std::int64_t end = begin + span;
 
-        if (begin < end) {
-            if (dim == 4) {
-                const std::int64_t c0 = counts[0];
-                const std::int64_t c1 = counts[1];
-                const std::int64_t c2 = counts[2];
-                const std::int64_t c3 = counts[3];
-                const double min0 = mins[0], min1 = mins[1], min2 = mins[2], min3 = mins[3];
-                const double step0 = steps[0], step1 = steps[1], step2 = steps[2], step3 = steps[3];
-
-                std::int64_t p0 = begin % c0;
-                std::int64_t rem1 = begin / c0;
-                std::int64_t p1 = rem1 % c1;
-                std::int64_t rem2 = rem1 / c1;
-                std::int64_t p2 = rem2 % c2;
-                std::int64_t p3 = rem2 / c2;
-
-                vars[0] = min0 + static_cast<double>(p0) * step0;
-                vars[1] = min1 + static_cast<double>(p1) * step1;
-                vars[2] = min2 + static_cast<double>(p2) * step2;
-                vars[3] = min3 + static_cast<double>(p3) * step3;
-
-                if (maximise) {
-                    for (std::int64_t idx = begin; idx < end; ++idx) {
-                        const double val = te_eval(compiled);
-                        if (val > local_best) {
-                            local_best = val;
-                            local_best_idx = idx;
-                        }
-
-                        ++p0;
-                        vars[0] += step0;
-                        if (p0 == c0) {
-                            p0 = 0;
-                            vars[0] = min0;
-                            ++p1;
-                            vars[1] += step1;
-                            if (p1 == c1) {
-                                p1 = 0;
-                                vars[1] = min1;
-                                ++p2;
-                                vars[2] += step2;
-                                if (p2 == c2) {
-                                    p2 = 0;
-                                    vars[2] = min2;
-                                    ++p3;
-                                    vars[3] += step3;
-                                    if (p3 == c3) {
-                                        p3 = 0;
-                                        vars[3] = min3;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    for (std::int64_t idx = begin; idx < end; ++idx) {
-                        const double val = te_eval(compiled);
-                        if (val < local_best) {
-                            local_best = val;
-                            local_best_idx = idx;
-                        }
-
-                        ++p0;
-                        vars[0] += step0;
-                        if (p0 == c0) {
-                            p0 = 0;
-                            vars[0] = min0;
-                            ++p1;
-                            vars[1] += step1;
-                            if (p1 == c1) {
-                                p1 = 0;
-                                vars[1] = min1;
-                                ++p2;
-                                vars[2] += step2;
-                                if (p2 == c2) {
-                                    p2 = 0;
-                                    vars[2] = min2;
-                                    ++p3;
-                                    vars[3] += step3;
-                                    if (p3 == c3) {
-                                        p3 = 0;
-                                        vars[3] = min3;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            } else {
+            if (begin < end) {
                 std::vector<std::int64_t> pos(dim);
                 std::int64_t rem = begin;
                 for (std::size_t d = dim; d-- > 0;) {
