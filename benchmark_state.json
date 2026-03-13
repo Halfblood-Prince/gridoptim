@@ -1,0 +1,21 @@
+{
+  "status": "not_run_yet",
+  "latest": {
+    "candidate_seconds": null,
+    "reference_seconds": null,
+    "ratio_vs_reference": null
+  },
+  "best": {
+    "candidate_seconds": null,
+    "reference_seconds": null,
+    "ratio_vs_reference": null
+  },
+  "competitor_beaten": false,
+  "target": {
+    "type": "beat_reference",
+    "goal_ratio_below": 1.0,
+    "goal_candidate_seconds_below": null
+  },
+  "history_count": 0,
+  "next_action": "Run benchmark.py, then optimize the repository package."
+}
