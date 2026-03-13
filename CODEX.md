@@ -84,6 +84,7 @@ You may:
 - improve memory layout
 
 - improve build configuration
+- replace tinyexpr with a faster library as long as the function to be optimised can be defined in the python file in a user-friendly way like normal mathematical espression
 
 You must not:
 
