@@ -21,8 +21,9 @@ Use this workflow:
 ```bash
 python -m pip install --upgrade pip
 python -m pip install scipy
-python -m pip install --no-deps --force-reinstall .
-Benchmark target rules
+python -m pip install --no-deps --force-reinstall
+```
+## Benchmark target rules
 
 Read benchmark_state.json first.
 
@@ -36,63 +37,63 @@ optimize until candidate_seconds < best.candidate_seconds
 
 the goal is to beat the previous best run of this repository
 
-Operating loop
+## Operating loop
 
-Read benchmark_state.json
+- Read benchmark_state.json
 
-Install SciPy from pip
+- Install SciPy from pip
 
-Install the local repo package
+- Install the local repo package
 
-Run benchmark.py
+- Run benchmark.py
 
 Inspect:
 
-benchmark_state.json
+- benchmark_state.json
 
-benchmark_logs.json
+- benchmark_logs.json
 
-benchmark_report.md
+- benchmark_report.md
 
-Improve the optimizer
+- Improve the optimizer
 
-Reinstall the local package
+- Reinstall the local package
 
-Run benchmark.py again
+- Run benchmark.py again
 
-Stop
+- Stop
 
 The next Codex run continues the loop.
 
-Allowed changes
+## Allowed changes
 
 You may:
 
-refactor the optimizer
+- refactor the optimizer
 
-improve algorithms
+- improve algorithms
 
-remove Python overhead
+- remove Python overhead
 
-add vectorization
+- add vectorization
 
-add parallelism
+- add parallelism
 
-add native acceleration
+- add native acceleration
 
-improve memory layout
+- improve memory layout
 
-improve build configuration
+- improve build configuration
 
 You must not:
 
-hardcode the optimum
+- hardcode the optimum
 
-remove the benchmark comparison
+- remove the benchmark comparison
 
-install gridoptim from pip
+- install gridoptim from pip
 
-Success rules
+## Success rules
 
 While the competitor is not yet beaten:
 
