@@ -7,7 +7,7 @@
       0.3125
     ],
     "best_value": -3.609375,
-    "elapsed_seconds": 1.0915504039999178,
+    "elapsed_seconds": 1.1729467670002123,
     "error": null,
     "name": "candidate",
     "status": "success",
@@ -21,7 +21,7 @@
       0.3125
     ],
     "best_value": -3.609375,
-    "elapsed_seconds": 58.17105120899987,
+    "elapsed_seconds": 55.408404453,
     "error": null,
     "name": "reference_scipy_brute",
     "status": "success",
@@ -34,12 +34,12 @@
       "reference_seconds": 58.17105120899987
     },
     "competitor_beaten": true,
-    "history_count": 4,
+    "history_count": 8,
     "latest": {
-      "candidate_seconds": 1.0915504039999178,
+      "candidate_seconds": 1.1729467670002123,
       "correctness_ok": true,
-      "ratio_vs_reference": 0.018764495076393595,
-      "reference_seconds": 58.17105120899987
+      "ratio_vs_reference": 0.02116911285534599,
+      "reference_seconds": 55.408404453
     },
     "next_action": "Optimise candidate runtime",
     "overall_status": "success_candidate_faster"
