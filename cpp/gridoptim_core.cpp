@@ -50,11 +50,11 @@ std::pair<double, std::vector<double>> optimise(
     }
 
     double global_best = maximise ? -std::numeric_limits<double>::infinity()
-                                  :  std::numeric_limits<double>::infinity();
+                                  : std::numeric_limits<double>::infinity();
     std::int64_t global_best_idx = 0;
 
 #ifdef _OPENMP
-    #pragma omp parallel
+#pragma omp parallel
 #endif
     {
         std::vector<double> vars(dim);
@@ -67,7 +67,7 @@ std::pair<double, std::vector<double>> optimise(
         te_expr* compiled = te_compile(expr.c_str(), te_vars.data(), static_cast<int>(dim), &err);
         if (compiled == nullptr) {
 #ifdef _OPENMP
-            #pragma omp critical
+#pragma omp critical
 #endif
             {
                 throw std::runtime_error("Failed to compile expression with tinyexpr");
@@ -75,27 +75,54 @@ std::pair<double, std::vector<double>> optimise(
         }
 
         double local_best = maximise ? -std::numeric_limits<double>::infinity()
-                                     :  std::numeric_limits<double>::infinity();
+                                     : std::numeric_limits<double>::infinity();
         std::int64_t local_best_idx = 0;
 
 #ifdef _OPENMP
-        #pragma omp for schedule(static)
+        const int thread_id = omp_get_thread_num();
+        const int thread_count = omp_get_num_threads();
+#else
+        const int thread_id = 0;
+        const int thread_count = 1;
 #endif
-        for (std::int64_t idx = 0; idx < total; ++idx) {
-            for (std::size_t d = 0; d < dim; ++d) {
-                const std::int64_t pos = (idx / strides[d]) % counts[d];
-                vars[d] = mins[d] + static_cast<double>(pos) * steps[d];
+
+        const std::int64_t chunk = total / thread_count;
+        const std::int64_t extra = total % thread_count;
+        const std::int64_t begin = thread_id * chunk + (thread_id < extra ? thread_id : extra);
+        const std::int64_t span = chunk + (thread_id < extra ? 1 : 0);
+        const std::int64_t end = begin + span;
+
+        if (begin < end) {
+            std::vector<std::int64_t> pos(dim);
+            std::int64_t rem = begin;
+            for (std::size_t d = dim; d-- > 0;) {
+                pos[d] = rem / strides[d];
+                rem %= strides[d];
+                vars[d] = mins[d] + static_cast<double>(pos[d]) * steps[d];
             }
 
-            const double val = te_eval(compiled);
-            if ((maximise && val > local_best) || (!maximise && val < local_best)) {
-                local_best = val;
-                local_best_idx = idx;
+            for (std::int64_t idx = begin; idx < end; ++idx) {
+                const double val = te_eval(compiled);
+                if ((maximise && val > local_best) || (!maximise && val < local_best)) {
+                    local_best = val;
+                    local_best_idx = idx;
+                }
+
+                // increment mixed-radix position
+                for (std::size_t d = 0; d < dim; ++d) {
+                    ++pos[d];
+                    vars[d] += steps[d];
+                    if (pos[d] < counts[d]) {
+                        break;
+                    }
+                    pos[d] = 0;
+                    vars[d] = mins[d];
+                }
             }
         }
 
 #ifdef _OPENMP
-        #pragma omp critical
+#pragma omp critical
 #endif
         {
             if ((maximise && local_best > global_best) || (!maximise && local_best < global_best)) {

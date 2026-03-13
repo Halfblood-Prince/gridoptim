@@ -1,21 +1,17 @@
 {
-  "status": "not_run_yet",
-  "latest": {
-    "candidate_seconds": null,
-    "reference_seconds": null,
-    "ratio_vs_reference": null
-  },
   "best": {
-    "candidate_seconds": null,
-    "reference_seconds": null,
-    "ratio_vs_reference": null
+    "candidate_seconds": 1.0915504039999178,
+    "ratio_vs_reference": 0.018764495076393595,
+    "reference_seconds": 58.17105120899987
   },
-  "competitor_beaten": false,
-  "target": {
-    "type": "beat_reference",
-    "goal_ratio_below": 1.0,
-    "goal_candidate_seconds_below": null
+  "competitor_beaten": true,
+  "history_count": 4,
+  "latest": {
+    "candidate_seconds": 1.0915504039999178,
+    "correctness_ok": true,
+    "ratio_vs_reference": 0.018764495076393595,
+    "reference_seconds": 58.17105120899987
   },
-  "history_count": 0,
-  "next_action": "Run benchmark.py, then optimize the repository package."
+  "next_action": "Optimise candidate runtime",
+  "overall_status": "success_candidate_faster"
 }
