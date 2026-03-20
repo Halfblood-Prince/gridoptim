@@ -7,8 +7,8 @@ implemented in this repository.
 
 ## Core rules
 
-1. Never install `gridoptim` from pip.
-2. Always install `gridoptim` from the current repository checkout.
+1. 
+2. Always install `gridoptim` from pip.
 3. SciPy must be installed from pip and used as the reference benchmark.
 4. Before making any code changes, read `benchmark_state.json`.
 5. After making changes, rebuild the package and run `benchmark.py`.
