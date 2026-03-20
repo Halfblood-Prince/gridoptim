@@ -603,5 +603,52 @@
       "next_action": "Optimise candidate runtime",
       "overall_status": "success_candidate_faster"
     }
+  },
+  {
+    "candidate": {
+      "best_point": [
+        -1.5625,
+        0.9375,
+        -0.3125,
+        0.3125
+      ],
+      "best_value": -3.609375,
+      "elapsed_seconds": 1.8445626069999435,
+      "error": null,
+      "name": "candidate",
+      "status": "success",
+      "traceback": null
+    },
+    "reference": {
+      "best_point": [
+        -1.5625,
+        0.9375,
+        -0.3125,
+        0.3125
+      ],
+      "best_value": -3.609375,
+      "elapsed_seconds": 100.53563578199999,
+      "error": null,
+      "name": "reference_scipy_brute",
+      "status": "success",
+      "traceback": null
+    },
+    "state": {
+      "best": {
+        "candidate_seconds": 1.0915504039999178,
+        "ratio_vs_reference": 0.018764495076393595,
+        "reference_seconds": 58.17105120899987
+      },
+      "competitor_beaten": true,
+      "history_count": 14,
+      "latest": {
+        "candidate_seconds": 1.8445626069999435,
+        "correctness_ok": true,
+        "ratio_vs_reference": 0.018347351092498847,
+        "reference_seconds": 100.53563578199999
+      },
+      "next_action": "Optimise candidate runtime",
+      "overall_status": "success_candidate_faster"
+    }
   }
 ]

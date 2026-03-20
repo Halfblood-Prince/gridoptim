@@ -1,9 +1,9 @@
 # Benchmark Report
 
 overall_status: `success_candidate_faster`
-candidate_seconds: `1.5312948060000053`
-reference_seconds: `80.03053087999979`
-ratio_vs_reference: `0.01913388289646704`
+candidate_seconds: `1.8445626069999435`
+reference_seconds: `100.53563578199999`
+ratio_vs_reference: `0.018347351092498847`
 correctness_ok: `True`
 
 ## Candidate

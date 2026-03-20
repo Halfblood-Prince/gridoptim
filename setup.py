@@ -1,6 +1,7 @@
 from pathlib import Path
 from setuptools import setup, Extension
 import pybind11
+import os
 import sys
 
 try:
@@ -8,11 +9,15 @@ try:
 except ModuleNotFoundError:  # pragma: no cover
     import tomli as tomllib
 
+native_opt_in = os.environ.get("GRIDOPTIM_NATIVE", "").strip().lower() in {"1", "true", "yes", "on"}
+
 if sys.platform == "win32":
     compile_args = ["/O2", "/openmp"]
     link_args = []
 else:
-    compile_args = ["-Ofast", "-march=native", "-fno-math-errno", "-fopenmp"]
+    compile_args = ["-Ofast", "-fno-math-errno", "-fopenmp"]
+    if native_opt_in:
+        compile_args.append("-march=native")
     link_args = ["-fopenmp"]
 
 ext_modules = [
