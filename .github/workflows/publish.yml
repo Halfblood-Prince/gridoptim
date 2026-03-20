@@ -1,0 +1,138 @@
+name: Publish to PyPI
+
+on:
+  workflow_dispatch:
+    inputs:
+      new_version:
+        description: "New package version to release"
+        required: true
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  prepare-release:
+    runs-on: ubuntu-latest
+    outputs:
+      current_version: ${{ steps.version_info.outputs.current_version }}
+      new_version: ${{ steps.version_info.outputs.new_version }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Read current version and update pyproject.toml
+        id: version_info
+        shell: bash
+        env:
+          NEW_VERSION: ${{ github.event.inputs.new_version }}
+        run: |
+          python - <<'PY'
+          import os
+          import pathlib
+          import re
+          import sys
+
+          pyproject_path = pathlib.Path("pyproject.toml")
+          contents = pyproject_path.read_text(encoding="utf-8")
+          match = re.search(r'^version = "([^"]+)"$', contents, re.MULTILINE)
+          if not match:
+              raise SystemExit("Could not find project version in pyproject.toml")
+
+          current_version = match.group(1)
+          new_version = os.environ["NEW_VERSION"].strip()
+          if not new_version:
+              raise SystemExit("The new_version workflow input is required.")
+          if new_version == current_version:
+              raise SystemExit(
+                  f"New version must differ from the current version ({current_version})."
+              )
+          if not re.fullmatch(r"[0-9A-Za-z][0-9A-Za-z._+-]*", new_version):
+              raise SystemExit(f"Unsupported version format: {new_version}")
+
+          updated = contents[: match.start(1)] + new_version + contents[match.end(1) :]
+          pyproject_path.write_text(updated, encoding="utf-8")
+
+          github_output = pathlib.Path(os.environ["GITHUB_OUTPUT"])
+          with github_output.open("a", encoding="utf-8") as fh:
+              fh.write(f"current_version={current_version}\n")
+              fh.write(f"new_version={new_version}\n")
+
+          github_summary = pathlib.Path(os.environ["GITHUB_STEP_SUMMARY"])
+          with github_summary.open("a", encoding="utf-8") as fh:
+              fh.write("## Release version\n")
+              fh.write(f"- Current version: `{current_version}`\n")
+              fh.write(f"- New version: `{new_version}`\n")
+          PY
+
+      - name: Commit version bump
+        env:
+          NEW_VERSION: ${{ steps.version_info.outputs.new_version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pyproject.toml
+          git commit -m "Release ${NEW_VERSION}"
+          git push
+
+  build-wheels:
+    needs: prepare-release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            cibw_archs: x86_64
+          - os: windows-latest
+            cibw_archs: AMD64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.23.3
+        env:
+          CIBW_ARCHS: ${{ matrix.cibw_archs }}
+
+      - name: Upload wheel artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ runner.os }}
+          path: wheelhouse/*.whl
+          if-no-files-found: error
+
+  publish:
+    needs:
+      - prepare-release
+      - build-wheels
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/gridoptim
+    steps:
+      - name: Download wheel artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: wheels-*
+          merge-multiple: true
+
+      - name: Publish wheels to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist

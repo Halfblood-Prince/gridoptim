@@ -1,6 +1,12 @@
+from pathlib import Path
 from setuptools import setup, Extension
 import pybind11
 import sys
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover
+    import tomli as tomllib
 
 if sys.platform == "win32":
     compile_args = ["/O2", "/openmp"]
@@ -20,9 +26,12 @@ ext_modules = [
     )
 ]
 
+project_metadata = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+project_version = project_metadata["project"]["version"]
+
 setup(
     name="gridoptim",
-    version="0.1",
+    version=project_version,
     packages=["gridoptim"],
     ext_modules=ext_modules,
 )
