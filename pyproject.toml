@@ -8,7 +8,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gridoptim"
-version = "2.0.0"
+version = "1.0.0"
 description = "Fast multivariate grid search optimizer with C++ core"
 readme = "README.md"
 requires-python = ">=3.10"
