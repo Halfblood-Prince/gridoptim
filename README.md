@@ -92,10 +92,11 @@ print("Best parameters:", params)
 ```
 
 Example output:
-
+```
 Best value: 0.0
 Best parameters: {'x': 0.0, 'y': 0.0}
 Basic Usage
+```
 
 Optimization in gridoptim follows three steps.
 
@@ -117,9 +118,11 @@ minimum value
 maximum value
 
 step size
-
+```
 opt.set_range("x", -10, 10, 0.5)
 opt.set_range("y", -10, 10, 0.5)
+```
+
 4. Run optimization
 value, params = opt.optimise("min")
 
