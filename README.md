@@ -304,7 +304,7 @@ brute-force optimization
 algorithm benchmarking
 
 Project Structure
-gridoptim/
+src/gridoptim/
     __init__.py
     gridoptim.py
 

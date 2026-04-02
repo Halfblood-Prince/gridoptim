@@ -1,10 +1,11 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Dict, Optional, Tuple
 
 try:
     from . import _core
-except Exception as e:
+except Exception:
     _core = None
 
 
@@ -64,7 +65,6 @@ class GridSearchOptimiser:
         if mode not in ("min", "max"):
             raise ValueError("mode must be 'min' or 'max'")
 
-        # Deterministic order
         var_names = sorted(self._ranges.keys())
         mins = [self._ranges[v].min_val for v in var_names]
         maxs = [self._ranges[v].max_val for v in var_names]
@@ -72,5 +72,4 @@ class GridSearchOptimiser:
 
         best_val, best_point = _core.optimise(self._expr, var_names, mins, maxs, steps, mode == "max")
         best_vars = {v: float(best_point[i]) for i, v in enumerate(var_names)}
-
         return float(best_val), best_vars

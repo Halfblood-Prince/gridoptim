@@ -1,8 +1,9 @@
-from pathlib import Path
-from setuptools import setup, Extension
-import pybind11
 import os
 import sys
+from pathlib import Path
+
+import pybind11
+from setuptools import Extension, find_packages, setup
 
 try:
     import tomllib
@@ -37,6 +38,7 @@ project_version = project_metadata["project"]["version"]
 setup(
     name="gridoptim",
     version=project_version,
-    packages=["gridoptim"],
+    package_dir={"": "src"},
+    packages=find_packages(where="src"),
     ext_modules=ext_modules,
 )
