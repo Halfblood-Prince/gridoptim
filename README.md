@@ -226,35 +226,6 @@ results in `100 x 100 x 100 = 1,000,000` evaluations.
 
 Because the heavy computation is performed in C++, `gridoptim` can handle much larger search spaces than a pure Python implementation, but exhaustive search still becomes expensive as the grid grows.
 
-## Development
-
-Clone the repository and install it in editable mode:
-
-```bash
-git clone https://github.com/Halfblood-Prince/gridoptim.git
-cd gridoptim
-pip install -e .
-```
-
-The project uses:
-
-- Python package code in `src/gridoptim`
-- Native extension sources in `cpp`
-- `pybind11` for the Python/C++ binding layer
-
-## Project Structure
-
-```text
-src/gridoptim/
-  __init__.py
-  gridoptim.py
-
-cpp/
-  gridoptim_core.cpp
-  tinyexpr.c
-  tinyexpr.h
-```
-
 ## License
 
 See the `LICENSE` file included in this repository for licensing terms.
