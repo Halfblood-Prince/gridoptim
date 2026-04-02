@@ -1,171 +1,163 @@
 # gridoptim
 
-Fast multivariate grid search optimizer for Python with a C++ backend.
+`gridoptim` is a deterministic multivariate grid-search optimizer for Python with a compiled C++ backend.
 
-gridoptim performs deterministic brute-force optimization of mathematical expressions across multi-dimensional parameter spaces.
+It evaluates a mathematical expression across every point in a user-defined parameter grid and returns the best result for either minimization or maximization.
 
-The optimizer evaluates every point in a parameter grid and returns the best result according to the chosen optimization mode.
+## Features
 
-It is designed for:
+- Deterministic brute-force optimization
+- Fast native C++ core exposed through Python
+- Simple string-based expression interface
+- Support for multi-variable parameter sweeps
+- Reproducible results across runs
+- Small public API with minimal setup
 
-- mathematical optimization
-- parameter sweeps
-- research experiments
-- simulation calibration
-- deterministic hyperparameter exploration
+## Installation
 
-The computation is executed in a compiled C++ core for performance while providing a clean Python API.
-
-# Table of Contents
-
-- Overview
-- Features
-- Installation
-- Quick Start
-- Basic Usage
-- Expression Syntax
-- Optimization Modes
-- Examples
-- API Reference
-- How It Works
-- Performance
-- Use Cases
-- Project Structure
-- Development
-- FAQ
-- Keywords
-- Citation
-- Author
-- License
-
-
-# Overview
-
-gridoptim is a deterministic optimization library that evaluates a mathematical expression across a grid of parameter values.
-
-The optimizer searches the parameter space by evaluating every possible combination of variable values defined by user-provided ranges.
-
-Unlike probabilistic optimizers, gridoptim guarantees that the global optimum within the defined grid will be found.
-
-# Features
-
-- fast C++ optimization engine
-- deterministic brute-force search
-- simple Python API
-- string-based mathematical expressions
-- multi-variable support
-- minimal dependencies
-- reproducible results
-
-# Installation
-
-Install using pip:
+Install from PyPI:
 
 ```bash
 pip install gridoptim
 ```
 
 Requirements:
-Python 3.10+
 
+- Python 3.10+
+- A supported build environment if installing from source
 
-# Quick Start
-
-Example optimization problem.
-
-Find the minimum of:
-
-x^2 + y^2
+## Quick Start
 
 ```python
 from gridoptim import GridSearchOptimiser
 
 opt = GridSearchOptimiser()
 
-opt.function("x^2 + y^2")
-opt.set_range("x", -10, 10, 0.5)
-opt.set_range("y", -10, 10, 0.5)
-value, params = opt.optimise("min")
+value, params = (
+    opt
+    .function("x^2 + y^2")
+    .set_range("x", -10, 10, 0.5)
+    .set_range("y", -10, 10, 0.5)
+    .optimise("min")
+)
 
 print("Best value:", value)
 print("Best parameters:", params)
 ```
 
-Example output:
-```
+Expected output:
+
+```text
 Best value: 0.0
 Best parameters: {'x': 0.0, 'y': 0.0}
-Basic Usage
 ```
 
-Optimization in gridoptim follows three steps.
+## How It Works
 
-1. Create optimizer
+`gridoptim` performs an exhaustive search over all combinations of values produced by the ranges you define.
+
+For example, if you search:
+
+- `x` from `-10` to `10` with step `1`
+- `y` from `-10` to `10` with step `1`
+
+the optimizer evaluates `21 x 21 = 441` points.
+
+This guarantees the best result within the grid you specified, unlike probabilistic or heuristic optimizers that may trade certainty for speed.
+
+## Basic Usage
+
+Optimization follows three steps:
+
+1. Create an optimizer.
+2. Define the expression to evaluate.
+3. Define a range for each variable, then run `optimise("min")` or `optimise("max")`.
+
+```python
 from gridoptim import GridSearchOptimiser
 
 opt = GridSearchOptimiser()
-2. Define function
+opt.function("sin(x) + cos(y) + x^2")
+opt.set_range("x", -3.14, 3.14, 0.1)
+opt.set_range("y", -3.14, 3.14, 0.1)
 
-Functions are defined as string expressions.
-
-opt.function("x^2 + y^2")
-3. Define parameter ranges
-
-Each variable requires:
-
-minimum value
-
-maximum value
-
-step size
-```
-opt.set_range("x", -10, 10, 0.5)
-opt.set_range("y", -10, 10, 0.5)
-```
-
-4. Run optimization
 value, params = opt.optimise("min")
+```
 
-or
+## API
 
+### `GridSearchOptimiser`
+
+Main optimization class.
+
+#### `GridSearchOptimiser(expr: str | None = None)`
+
+Creates a new optimizer. You may optionally provide the expression at construction time.
+
+#### `function(expr: str) -> GridSearchOptimiser`
+
+Sets the mathematical expression to optimize.
+
+```python
+opt.function("x^2 + y^2")
+```
+
+#### `set_range(var: str, min_val: float, max_val: float, step: float) -> GridSearchOptimiser`
+
+Defines the search range for a variable.
+
+```python
+opt.set_range("x", -10, 10, 0.1)
+```
+
+Arguments:
+
+- `var`: variable name used in the expression
+- `min_val`: lower bound
+- `max_val`: upper bound
+- `step`: step size, must be greater than `0`
+
+#### `optimise(mode: str = "min") -> tuple[float, dict[str, float]]`
+
+Runs the grid search and returns:
+
+- `best_value`
+- `best_parameter_dict`
+
+```python
 value, params = opt.optimise("max")
-Expression Syntax
+```
 
-Expressions are parsed by the embedded tinyexpr mathematical parser.
+Valid modes:
 
-Supported operations include:
+- `"min"` for minimization
+- `"max"` for maximization
 
-+  -  *  /  ^
+## Expression Syntax
 
-Supported functions include common math operations such as:
+Expressions are passed as strings and evaluated by the native backend using a lightweight mathematical expression parser.
 
-sin
-cos
-tan
-log
-sqrt
-exp
-abs
+Supported operators include:
+
+- `+`
+- `-`
+- `*`
+- `/`
+- `^`
+
+Common mathematical functions such as `sin`, `cos`, `tan`, `log`, `sqrt`, `exp`, and `abs` are supported.
 
 Example:
 
-sin(x) + cos(y) + x^2
-Optimization Modes
+```python
+opt.function("sin(x) * cos(y) + x^2")
+```
 
-gridoptim supports two optimization modes.
+## Examples
 
-Minimize
-optimise("min")
+### Minimize a quadratic
 
-Finds the smallest value of the expression.
-
-Maximize
-optimise("max")
-
-Finds the largest value of the expression.
-
-Examples
-Example 1 — Quadratic Minimum
+```python
 from gridoptim import GridSearchOptimiser
 
 opt = GridSearchOptimiser()
@@ -180,7 +172,11 @@ value, params = (
 
 print(value)
 print(params)
-Example 2 — Maximum of a Function
+```
+
+### Maximize a trigonometric expression
+
+```python
 from gridoptim import GridSearchOptimiser
 
 opt = GridSearchOptimiser()
@@ -195,7 +191,11 @@ value, params = (
 
 print(value)
 print(params)
-Example 3 — 3-Variable Optimization
+```
+
+### Search across three variables
+
+```python
 from gridoptim import GridSearchOptimiser
 
 opt = GridSearchOptimiser()
@@ -211,171 +211,54 @@ value, params = (
 
 print(value)
 print(params)
-API Reference
-GridSearchOptimiser
+```
 
-Main optimization class.
+## Performance Notes
 
-Create optimizer
-opt = GridSearchOptimiser()
-function(expr)
+Grid search grows exponentially with the number of variables and the number of steps per variable.
 
-Sets the mathematical expression to optimize.
+For example:
 
-Parameters:
+- 3 variables
+- 100 steps per variable
 
-expr : str
+results in `100 x 100 x 100 = 1,000,000` evaluations.
 
-Example:
+Because the heavy computation is performed in C++, `gridoptim` can handle much larger search spaces than a pure Python implementation, but exhaustive search still becomes expensive as the grid grows.
 
-opt.function("x^2 + y^2")
-set_range(var, min_val, max_val, step)
+## Development
 
-Defines the search range for a variable.
+Clone the repository and install it in editable mode:
 
-Parameters:
+```bash
+git clone https://github.com/Halfblood-Prince/gridoptim.git
+cd gridoptim
+pip install -e .
+```
 
-var : variable name
-min_val : minimum value
-max_val : maximum value
-step : step size
+The project uses:
 
-Example:
+- Python package code in `src/gridoptim`
+- Native extension sources in `cpp`
+- `pybind11` for the Python/C++ binding layer
 
-opt.set_range("x", -10, 10, 0.1)
-optimise(mode)
+## Project Structure
 
-Runs the grid search.
-
-Parameters:
-
-mode : "min" or "max"
-
-Returns:
-
-(best_value, best_parameter_dict)
-
-Example:
-
-value, params = opt.optimise("min")
-How It Works
-
-gridoptim evaluates the expression at every point in the grid defined by parameter ranges.
-
-Example grid:
-
-x: -10 → 10 step 1
-y: -10 → 10 step 1
-
-Total evaluations:
-
-21 × 21 = 441
-
-The C++ backend performs the iteration and expression evaluation.
-
-This significantly reduces Python overhead.
-
-Performance
-
-Grid search complexity grows exponentially with variables.
-
-Example:
-
-3 variables
-100 steps each
-
-Total evaluations:
-
-100 × 100 × 100 = 1,000,000
-
-Because the heavy computation runs in C++, gridoptim can handle large evaluation counts efficiently.
-
-Use Cases
-
-gridoptim can be used for:
-
-mathematical optimization
-
-parameter sweeps
-
-research experiments
-
-simulation calibration
-
-brute-force optimization
-
-algorithm benchmarking
-
-Project Structure
+```text
 src/gridoptim/
-    __init__.py
-    gridoptim.py
+  __init__.py
+  gridoptim.py
 
 cpp/
-    gridoptim_core.cpp
-    tinyexpr.c
-    tinyexpr.h
+  gridoptim_core.cpp
+  tinyexpr.c
+  tinyexpr.h
+```
 
-pyproject.toml
-setup.py
-Development
+## License
 
-Clone repository:
+See the `LICENSE` file included in this repository for licensing terms.
 
-git clone https://github.com/Halfblood-Prince/gridoptim.git
-
-Install locally:
-
-pip install -e .
-
----
-# FAQ
-What is gridoptim?
-
-gridoptim is a Python library for deterministic grid search optimization of mathematical expressions.
-
-Does gridoptim support multiple variables?
-
-Yes. You can define ranges for any number of variables.
-
-Can it maximize functions?
-
-Yes. Use:
-
-optimise("max")
-Does gridoptim support arbitrary Python functions?
-
-No. It evaluates string expressions using a mathematical expression parser.
-
-Why use string expressions?
-
-String expressions allow the C++ backend to evaluate functions directly without Python overhead.
-
-# Keywords
-
-grid search optimization
-python grid search library
-mathematical optimization python
-parameter sweep python
-deterministic optimization
-multivariate grid search
-scientific parameter optimization
-
-# Citation
-
-If you use gridoptim in research please cite:
-
-gridoptim: Fast multivariate grid search optimizer
-https://github.com/Halfblood-Prince/gridoptim
-
----
-
-# Author
+## Author
 
 Akhil Shimna Kumar
-
----
-
-# License
-
-See LICENSE file for details.
