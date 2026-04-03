@@ -45,12 +45,7 @@ def benchmark_gridoptim():
     optimiser.set_range("w", -10.0, 10.0, step)
 
     start = time.perf_counter()
-
-    # simple "alive" indicator
-    print("gridoptim running...", flush=True)
-
     result = optimiser.optimise("min")
-
     elapsed = time.perf_counter() - start
 
     best_point = None
@@ -68,25 +63,8 @@ def benchmark_scipy_brute():
     from scipy.optimize import brute
 
     step = 20.0 / 64.0
-    points_per_dim = int(20.0 / step)
-    total_iterations = points_per_dim ** 4
 
-    print(f"\nRunning scipy.brute...")
-    print(f"Total iterations: {total_iterations}")
-
-    counter = {"i": 0}
-
-    def objective_with_progress(v):
-        counter["i"] += 1
-
-        if counter["i"] % 50000 == 0 or counter["i"] == total_iterations:
-            print(
-                f"\rprogress: {counter['i']}/{total_iterations}",
-                end="",
-                flush=True,
-            )
-
-        return objective_numpy(v)
+    print("\nRunning scipy.brute...")
 
     ranges = (
         slice(-10.0, 10.0, step),
@@ -96,10 +74,13 @@ def benchmark_scipy_brute():
     )
 
     start = time.perf_counter()
-    best_point = brute(objective_with_progress, ranges, finish=None)
+    best_point = brute(
+        objective_numpy,
+        ranges,
+        finish=None,
+        workers=-1,  # use all available CPU cores
+    )
     elapsed = time.perf_counter() - start
-
-    print()
 
     best_point = [float(v) for v in best_point]
     best_value = objective_numpy(best_point)
