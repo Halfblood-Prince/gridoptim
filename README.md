@@ -233,14 +233,14 @@ Benchmark problem: 4D grid search optimization.
 
 | Optimizer | Time |
 |-----------|------|
-| gridoptim | **0.80 s** |
-| scipy.brute | 342.46 s |
+| gridoptim | **0.821 s** |
+| scipy.brute | 89.167 s |
 
 Result:
 
 - Same optimum value
 - Same optimum point
-- **~429× speedup**
+- **~108× speedup**
 
 Hardware:
 - CPU: Intel i5-12500H
