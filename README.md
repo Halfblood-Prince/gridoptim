@@ -1,4 +1,5 @@
 # gridoptim
+[![PyPI Downloads](https://static.pepy.tech/personalized-badge/gridoptim?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=Downloads)](https://pepy.tech/projects/gridoptim)
 
 `gridoptim` is a deterministic multivariate grid-search optimizer for Python with a compiled C++ backend.
 
