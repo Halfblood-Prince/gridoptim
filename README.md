@@ -227,6 +227,25 @@ results in `100 x 100 x 100 = 1,000,000` evaluations.
 
 Because the heavy computation is performed in C++, `gridoptim` can handle much larger search spaces than a pure Python implementation, but exhaustive search still becomes expensive as the grid grows.
 
+## Benchmark
+
+Benchmark problem: 4D grid search optimization.
+
+| Optimizer | Time |
+|-----------|------|
+| gridoptim | **0.80 s** |
+| scipy.brute | 342.46 s |
+
+Result:
+
+- Same optimum value
+- Same optimum point
+- **~429× speedup**
+
+Hardware:
+- CPU: Intel i5-12500H
+- Python 3.14
+
 ## License
 
 See the `LICENSE` file included in this repository for licensing terms.
